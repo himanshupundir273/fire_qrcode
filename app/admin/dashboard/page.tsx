@@ -10,6 +10,7 @@ import {
 import { getDashboardStats, getRequests } from '@/actions/requests'
 import { StatCard } from '@/components/admin/StatCard'
 import { RequestCard } from '@/components/admin/RequestCard'
+import { WhatsAppTester } from '@/components/admin/WhatsAppTester'
 import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
@@ -69,6 +70,11 @@ export default async function DashboardPage() {
           color="red"
           description="Urgent attention"
         />
+      </div>
+
+      {/* WhatsApp Test */}
+      <div className="mb-8">
+        <WhatsAppTester />
       </div>
 
       {/* Recent Requests */}
