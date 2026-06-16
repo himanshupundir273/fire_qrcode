@@ -83,9 +83,11 @@ export async function submitSupportRequest(
     .eq('is_active', true)
 
   if (technicians?.length) {
-    notifyTechniciansNewRequest(technicians).catch((err) =>
+    try {
+      await notifyTechniciansNewRequest(technicians)
+    } catch (err) {
       console.error('[WhatsApp] Notification error:', err)
-    )
+    }
   }
 
   return { ticketId, requestId: request.id }
