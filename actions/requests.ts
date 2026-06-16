@@ -6,6 +6,7 @@ import { generateTicketId } from '@/lib/utils'
 import { SupportRequestFormData } from '@/lib/validations'
 import { Status } from '@/types'
 import { revalidatePath } from 'next/cache'
+import { notifyTechniciansNewRequest } from '@/lib/whatsapp'
 
 export async function submitSupportRequest(
   data: SupportRequestFormData,
@@ -72,6 +73,19 @@ export async function submitSupportRequest(
 
   if (mediaInserts.length > 0) {
     await supabase.from('request_media').insert(mediaInserts)
+  }
+
+  // Notify all active technicians via WhatsApp (non-blocking)
+  const adminClient = createAdminClient()
+  const { data: technicians } = await adminClient
+    .from('technician_profiles')
+    .select('full_name, phone')
+    .eq('is_active', true)
+
+  if (technicians?.length) {
+    notifyTechniciansNewRequest(technicians).catch((err) =>
+      console.error('[WhatsApp] Notification error:', err)
+    )
   }
 
   return { ticketId, requestId: request.id }
