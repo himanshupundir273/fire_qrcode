@@ -9,7 +9,7 @@ export function downloadRequestPDF(
   const pageWidth = doc.internal.pageSize.getWidth()
   let y = 20
 
-  const addLine = (label: string, value: string, indent = 14) => {
+  const addLine = (label: string, value: string | null | undefined, indent = 14) => {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     doc.setTextColor(100)
@@ -74,7 +74,7 @@ export function downloadRequestPDF(
   y += 6
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(30)
-  const descLines = doc.splitTextToSize(request.issue_description, pageWidth - 28)
+  const descLines = doc.splitTextToSize(request.issue_description ?? '—', pageWidth - 28)
   doc.text(descLines, 14, y)
   y += descLines.length * 5 + 5
 

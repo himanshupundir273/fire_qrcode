@@ -47,7 +47,7 @@ export function RequestsTable({ requests }: { requests: SupportRequest[] }) {
     const matchesSearch =
       !search ||
       r.ticket_id.toLowerCase().includes(search.toLowerCase()) ||
-      r.company_name.toLowerCase().includes(search.toLowerCase()) ||
+      (r.company_name?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
       r.contact_person.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = statusFilter === 'all' || r.status === statusFilter
     const matchesPriority = priorityFilter === 'all' || r.priority === priorityFilter
