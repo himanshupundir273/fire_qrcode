@@ -6,7 +6,7 @@ import { generateTicketId } from '@/lib/utils'
 import { SupportRequestFormData } from '@/lib/validations'
 import { Status } from '@/types'
 import { revalidatePath } from 'next/cache'
-import { notifyTechniciansNewRequest } from '@/lib/whatsapp'
+import { notifyTechniciansNewRequest, notifyAdminNewRequest } from '@/lib/whatsapp'
 
 export async function submitSupportRequest(
   data: SupportRequestFormData,
@@ -82,13 +82,10 @@ export async function submitSupportRequest(
     .select('full_name, phone')
     .eq('is_active', true)
 
-  if (technicians?.length) {
-    try {
-      await notifyTechniciansNewRequest(technicians)
-    } catch (err) {
-      console.error('[WhatsApp] Notification error:', err)
-    }
-  }
+  await Promise.allSettled([
+    technicians?.length ? notifyTechniciansNewRequest(technicians) : Promise.resolve(),
+    notifyAdminNewRequest(),
+  ])
 
   return { ticketId, requestId: request.id }
 }

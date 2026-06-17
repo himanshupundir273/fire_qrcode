@@ -34,7 +34,7 @@ async function sendWhatsApp(phone: string, name: string) {
   }
 }
 
-// Notify all active technicians — template has no dynamic params
+// Notify all active technicians when a new request is submitted
 export async function notifyTechniciansNewRequest(
   technicians: { full_name: string; phone: string }[]
 ) {
@@ -43,4 +43,19 @@ export async function notifyTechniciansNewRequest(
   await Promise.allSettled(
     technicians.map((tech) => sendWhatsApp(tech.phone, tech.full_name))
   )
+}
+
+// Notify admin when a new request is submitted
+export async function notifyAdminNewRequest() {
+  const adminPhone = process.env.ADMIN_PHONE
+  if (!adminPhone) {
+    console.error('[WhatsApp] Missing ADMIN_PHONE')
+    return
+  }
+  await sendWhatsApp(adminPhone, 'Admin')
+}
+
+// Notify a specific technician when admin assigns them to a request
+export async function notifyTechnicianAssigned(phone: string, name: string) {
+  await sendWhatsApp(phone, name)
 }

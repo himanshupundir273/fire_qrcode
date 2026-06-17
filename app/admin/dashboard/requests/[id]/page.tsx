@@ -14,12 +14,14 @@ import {
 } from 'lucide-react'
 import { getRequestById } from '@/actions/requests'
 import { getUser } from '@/actions/auth'
+import { getAllTechnicians } from '@/actions/technician'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { StatusUpdater } from '@/components/admin/StatusUpdater'
 import { AddNoteForm } from '@/components/admin/AddNoteForm'
 import { MediaGallery } from '@/components/admin/MediaGallery'
 import { DownloadPDFButton } from '@/components/admin/DownloadPDFButton'
+import { AssignTechnician } from '@/components/admin/AssignTechnician'
 import {
   cn,
   getPriorityColor,
@@ -63,7 +65,10 @@ export default async function RequestDetailPage({
     notFound()
   }
 
-  const user = await getUser()
+  const [user, technicians] = await Promise.all([
+    getUser(),
+    getAllTechnicians(),
+  ])
 
   return (
     <div className="p-6 md:p-8">
@@ -175,39 +180,32 @@ export default async function RequestDetailPage({
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* Assigned Technician */}
-          {(request as any).technician ? (
-            <div className="bg-white rounded-xl border border-blue-200 p-5 shadow-sm">
-              <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
-                Assigned Technician
-              </h2>
-              <div className="space-y-2">
-                <div>
-                  <div className="text-xs text-gray-400">Name</div>
-                  <div className="text-sm font-semibold text-gray-900">{(request as any).technician.full_name}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400">Email</div>
-                  <div className="text-sm text-gray-700">{(request as any).technician.email}</div>
-                </div>
+          {/* Assign Technician */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full inline-block ${(request as any).technician ? 'bg-blue-500' : 'bg-gray-300'}`} />
+              Assigned Technician
+            </h2>
+
+            {/* Current assignment info */}
+            {(request as any).technician && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100 space-y-1">
+                <div className="text-sm font-semibold text-gray-900">{(request as any).technician.full_name}</div>
+                <div className="text-xs text-gray-500">{(request as any).technician.email}</div>
                 {(request as any).technician.phone && (
-                  <div>
-                    <div className="text-xs text-gray-400">Phone</div>
-                    <a href={`tel:${(request as any).technician.phone}`}
-                      className="text-sm text-blue-600 hover:underline">
-                      {(request as any).technician.phone}
-                    </a>
-                  </div>
+                  <a href={`tel:${(request as any).technician.phone}`} className="text-xs text-blue-600 hover:underline block">
+                    {(request as any).technician.phone}
+                  </a>
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-xl border border-dashed border-gray-300 p-5 text-center">
-              <p className="text-sm text-gray-400">No technician assigned yet</p>
-              <p className="text-xs text-gray-400 mt-0.5">A technician will self-assign when they accept this request</p>
-            </div>
-          )}
+            )}
+
+            <AssignTechnician
+              requestId={request.id}
+              technicians={technicians as any}
+              currentAssignedId={request.assigned_to}
+            />
+          </div>
 
           {/* Status Management */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">

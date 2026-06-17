@@ -152,6 +152,34 @@ export async function getAllTechnicians() {
   return data || []
 }
 
+// Admin manually assigns a technician to a request
+export async function assignRequestToTechnician(requestId: string, technicianId: string) {
+  const supabase = await createClient()
+  const adminClient = createAdminClient()
+
+  const { error } = await supabase
+    .from('support_requests')
+    .update({ assigned_to: technicianId, status: 'in_progress' })
+    .eq('id', requestId)
+
+  if (error) throw new Error(error.message)
+
+  // Notify the assigned technician via WhatsApp
+  const { data: tech } = await adminClient
+    .from('technician_profiles')
+    .select('full_name, phone')
+    .eq('id', technicianId)
+    .single()
+
+  if (tech?.phone) {
+    const { notifyTechnicianAssigned } = await import('@/lib/whatsapp')
+    await notifyTechnicianAssigned(tech.phone, tech.full_name).catch(() => {})
+  }
+
+  revalidatePath(`/admin/dashboard/requests/${requestId}`)
+  revalidatePath('/admin/dashboard/requests')
+}
+
 export async function technicianLogout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
