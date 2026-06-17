@@ -1,11 +1,12 @@
 const AISENSY_URL = 'https://backend.aisensy.com/campaign/t1/api/v2'
+const CAMPAIGN_NAME = 'qr_code_app'
+const TEMPLATE_NAME = 'qr_code'
 
 async function sendWhatsApp(phone: string, name: string) {
   const apiKey = process.env.AISENSY_API_KEY
-  const campaignName = process.env.AISENSY_CAMPAIGN_NAME
 
-  if (!apiKey || !campaignName) {
-    console.error('[WhatsApp] Missing AISENSY_API_KEY or AISENSY_CAMPAIGN_NAME')
+  if (!apiKey) {
+    console.error('[WhatsApp] Missing AISENSY_API_KEY')
     return
   }
 
@@ -17,10 +18,10 @@ async function sendWhatsApp(phone: string, name: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         apiKey,
-        campaignName,
+        campaignName: CAMPAIGN_NAME,
         destination,
         userName: name,
-        templateName: 'qr_code',
+        templateName: TEMPLATE_NAME,
       }),
     })
 

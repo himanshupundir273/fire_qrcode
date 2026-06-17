@@ -3,15 +3,16 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const AISENSY_URL = 'https://backend.aisensy.com/campaign/t1/api/v2'
+const CAMPAIGN_NAME = 'qr_code_app'
+const TEMPLATE_NAME = 'qr_code'
 
 export async function testWhatsAppNotification() {
   const apiKey = process.env.AISENSY_API_KEY
-  const campaignName = process.env.AISENSY_CAMPAIGN_NAME
 
-  if (!apiKey || !campaignName) {
+  if (!apiKey) {
     return {
       success: false,
-      error: 'Missing AISENSY_API_KEY or AISENSY_CAMPAIGN_NAME in environment',
+      error: 'Missing AISENSY_API_KEY in environment',
       results: [],
     }
   }
@@ -39,10 +40,10 @@ export async function testWhatsAppNotification() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             apiKey,
-            campaignName,
+            campaignName: CAMPAIGN_NAME,
             destination,
             userName: tech.full_name,
-            templateName: 'qr_code',
+            templateName: TEMPLATE_NAME,
           }),
         })
 
