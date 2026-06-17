@@ -142,10 +142,11 @@ export async function technicianMarkComplete(requestId: string) {
 }
 
 export async function getAllTechnicians() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
+  const adminClient = createAdminClient()
+  const { data, error } = await adminClient
     .from('technician_profiles')
     .select('*')
+    .eq('is_active', true)
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
