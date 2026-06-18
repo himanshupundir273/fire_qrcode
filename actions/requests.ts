@@ -167,6 +167,22 @@ export async function updateRequestStatus(id: string, status: Status) {
     .eq('id', id)
 
   if (error) throw new Error(error.message)
+
+  // Notify customer when admin marks as completed
+  if (status === 'completed') {
+    const adminClient = createAdminClient()
+    const { data: req } = await adminClient
+      .from('support_requests')
+      .select('ticket_id, contact_person, contact_number')
+      .eq('id', id)
+      .single()
+
+    if (req?.contact_number) {
+      const { notifyCustomerCompleted } = await import('@/lib/whatsapp')
+      await notifyCustomerCompleted(req.contact_number, req.contact_person, req.ticket_id).catch(() => {})
+    }
+  }
+
   revalidatePath('/admin/dashboard')
   revalidatePath(`/admin/requests/${id}`)
 }

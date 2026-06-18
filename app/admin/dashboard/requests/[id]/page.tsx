@@ -143,26 +143,59 @@ export default async function RequestDetailPage({
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Wrench className="w-4 h-4 text-red-600" />
-              Issue Details
+              Panel & Issue Details
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mb-4">
-              <InfoRow icon={Wrench} label="Panel Brand" value={request.panel_brand} />
-              <InfoRow icon={Wrench} label="Panel Model" value={request.panel_model} />
-              {request.visit_date && (
-                <InfoRow icon={Calendar} label="Preferred Visit Date" value={formatDate(request.visit_date)} />
-              )}
-              {request.visit_time && (
-                <InfoRow icon={Clock} label="Preferred Visit Time" value={request.visit_time} />
-              )}
-            </div>
-            <div>
-              <div className="text-xs text-gray-400 mb-1">Issue Title</div>
-              <div className="font-semibold text-gray-900 mb-3">{request.issue_title}</div>
-              <div className="text-xs text-gray-400 mb-1">Description</div>
-              <div className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 leading-relaxed whitespace-pre-wrap">
-                {request.issue_description}
+
+            {/* Visit schedule */}
+            {(request.visit_date || request.visit_time) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mb-4">
+                {request.visit_date && <InfoRow icon={Calendar} label="Preferred Visit Date" value={formatDate(request.visit_date)} />}
+                {request.visit_time && <InfoRow icon={Clock} label="Preferred Visit Time" value={request.visit_time} />}
               </div>
-            </div>
+            )}
+
+            {/* Panels — render from JSON if available, else fallback to legacy single panel */}
+            {(() => {
+              let panels: { item_name: string; model: string; serial_number?: string; issue_title: string }[] | null = null
+              try {
+                if (request.issue_description) panels = JSON.parse(request.issue_description)
+              } catch {}
+
+              if (panels && Array.isArray(panels)) {
+                return (
+                  <div className="space-y-3">
+                    {panels.map((p, i) => (
+                      <div key={i} className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                        <div className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">Panel {i + 1}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+                          <InfoRow icon={Wrench} label="Item Name" value={p.item_name} />
+                          <InfoRow icon={Wrench} label="Model" value={p.model} />
+                          {p.serial_number && <InfoRow icon={Wrench} label="Serial Number" value={p.serial_number} />}
+                          <InfoRow icon={Wrench} label="Issue" value={p.issue_title} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              }
+
+              // Legacy single panel
+              return (
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+                    <InfoRow icon={Wrench} label="Panel Brand" value={request.panel_brand} />
+                    <InfoRow icon={Wrench} label="Panel Model" value={request.panel_model} />
+                  </div>
+                  <div className="mt-2">
+                    <div className="text-xs text-gray-400 mb-1">Issue Title</div>
+                    <div className="text-sm font-semibold text-gray-900">{request.issue_title}</div>
+                  </div>
+                  {request.issue_description && (
+                    <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{request.issue_description}</div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
 
           {/* Media */}

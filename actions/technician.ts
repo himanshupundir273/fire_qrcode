@@ -138,6 +138,19 @@ export async function technicianMarkComplete(requestId: string) {
     .eq('assigned_to', user.id)
 
   if (error) throw new Error(error.message)
+
+  // Notify customer
+  const { data: req } = await createAdminClient()
+    .from('support_requests')
+    .select('ticket_id, contact_person, contact_number')
+    .eq('id', requestId)
+    .single()
+
+  if (req?.contact_number) {
+    const { notifyCustomerCompleted } = await import('@/lib/whatsapp')
+    await notifyCustomerCompleted(req.contact_number, req.contact_person, req.ticket_id).catch(() => {})
+  }
+
   revalidatePath('/technician/dashboard')
 }
 

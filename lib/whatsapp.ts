@@ -60,6 +60,39 @@ export async function notifyTechnicianAssigned(phone: string, name: string) {
   await sendWhatsApp(phone, name)
 }
 
+// Notify customer when their request is marked completed
+export async function notifyCustomerCompleted(phone: string, name: string, ticketId: string) {
+  const apiKey = process.env.AISENSY_API_KEY
+  if (!apiKey) {
+    console.error('[WhatsApp] Missing AISENSY_API_KEY')
+    return
+  }
+
+  const destination = phone.replace(/\D/g, '')
+
+  try {
+    const res = await fetch(AISENSY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey,
+        campaignName: 'query_completed',
+        destination,
+        userName: name,
+        templateName: 'query_complete',
+        templateParams: [ticketId],
+      }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      console.error(`[WhatsApp] Completion notify failed for ${destination}: ${res.status} — ${text}`)
+    }
+  } catch (err) {
+    console.error(`[WhatsApp] Completion notify network error:`, err)
+  }
+}
+
 // Notify customer when a technician is assigned to their request
 export async function notifyCustomerAssigned(params: {
   phone: string

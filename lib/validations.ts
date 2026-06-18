@@ -1,5 +1,14 @@
 import { z } from 'zod'
 
+export const panelItemSchema = z.object({
+  item_name: z.string().min(1, 'Item name is required'),
+  model: z.string().min(1, 'Model is required'),
+  serial_number: z.string().optional(),
+  issue_title: z.string().min(3, 'Issue title is required'),
+})
+
+export type PanelItem = z.infer<typeof panelItemSchema>
+
 export const supportRequestSchema = z.object({
   company_name: z.string().optional(),
   contact_person: z.string().min(2, 'Contact person name is required'),
@@ -11,11 +20,13 @@ export const supportRequestSchema = z.object({
   city: z.string().min(2, 'City is required'),
   state: z.string().min(2, 'State is required'),
   pincode: z.string().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
-  panel_brand: z.string().min(1, 'Panel brand is required'),
-  panel_model: z.string().min(1, 'Panel model is required'),
-  issue_title: z.string().min(5, 'Issue title must be at least 5 characters'),
+  panels: z.array(panelItemSchema).min(1, 'Add at least one panel'),
+  // These are derived from panels[0] before submission
+  panel_brand: z.string().optional(),
+  panel_model: z.string().optional(),
+  issue_title: z.string().optional(),
   issue_description: z.string().optional(),
-  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   visit_date: z.string().optional(),
   visit_time: z.string().optional(),
 })
