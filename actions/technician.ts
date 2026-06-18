@@ -165,17 +165,40 @@ export async function assignRequestToTechnician(requestId: string, technicianId:
 
   if (error) throw new Error(error.message)
 
-  // Notify the assigned technician via WhatsApp
-  const { data: tech } = await adminClient
-    .from('technician_profiles')
-    .select('full_name, phone')
-    .eq('id', technicianId)
-    .single()
+  // Fetch technician + request details in parallel
+  const [{ data: tech }, { data: req }] = await Promise.all([
+    adminClient
+      .from('technician_profiles')
+      .select('full_name, phone')
+      .eq('id', technicianId)
+      .single(),
+    adminClient
+      .from('support_requests')
+      .select('ticket_id, contact_person, contact_number, visit_date, visit_time')
+      .eq('id', requestId)
+      .single(),
+  ])
 
-  if (tech?.phone) {
-    const { notifyTechnicianAssigned } = await import('@/lib/whatsapp')
-    await notifyTechnicianAssigned(tech.phone, tech.full_name).catch(() => {})
-  }
+  const { notifyTechnicianAssigned, notifyCustomerAssigned } = await import('@/lib/whatsapp')
+
+  await Promise.allSettled([
+    // Notify the assigned technician
+    tech?.phone
+      ? notifyTechnicianAssigned(tech.phone, tech.full_name)
+      : Promise.resolve(),
+
+    // Notify the customer
+    req?.contact_number
+      ? notifyCustomerAssigned({
+          phone: req.contact_number,
+          name: req.contact_person,
+          ticketId: req.ticket_id,
+          technicianName: tech?.full_name ?? 'Our Technician',
+          visitDate: req.visit_date ?? 'To be confirmed',
+          visitTime: req.visit_time ?? 'To be confirmed',
+        })
+      : Promise.resolve(),
+  ])
 
   revalidatePath(`/admin/dashboard/requests/${requestId}`)
   revalidatePath('/admin/dashboard/requests')

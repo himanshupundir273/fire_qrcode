@@ -59,3 +59,48 @@ export async function notifyAdminNewRequest() {
 export async function notifyTechnicianAssigned(phone: string, name: string) {
   await sendWhatsApp(phone, name)
 }
+
+// Notify customer when a technician is assigned to their request
+export async function notifyCustomerAssigned(params: {
+  phone: string
+  name: string
+  ticketId: string
+  technicianName: string
+  visitDate: string
+  visitTime: string
+}) {
+  const apiKey = process.env.AISENSY_API_KEY
+  if (!apiKey) {
+    console.error('[WhatsApp] Missing AISENSY_API_KEY')
+    return
+  }
+
+  const destination = params.phone.replace(/\D/g, '')
+
+  try {
+    const res = await fetch(AISENSY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey,
+        campaignName: 'query_submission',
+        destination,
+        userName: params.name,
+        templateName: 'query_submit',
+        templateParams: [
+          params.ticketId,
+          params.technicianName,
+          params.visitDate,
+          params.visitTime,
+        ],
+      }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      console.error(`[WhatsApp] Customer notify failed for ${destination}: ${res.status} — ${text}`)
+    }
+  } catch (err) {
+    console.error(`[WhatsApp] Customer notify network error:`, err)
+  }
+}
