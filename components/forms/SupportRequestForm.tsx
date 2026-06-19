@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import {
   Upload, X, ImageIcon, Video, AlertTriangle, Loader2,
   Building2, User, Phone, MapPin, Wrench, FileText,
-  Calendar, Clock, LocateFixed, Plus, Trash2,
+  Calendar, Clock, LocateFixed, Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { supportRequestSchema, SupportRequestFormData } from '@/lib/validations'
 import { submitSupportRequest } from '@/actions/requests'
 import { createClient } from '@/lib/supabase/client'
+import { PanelItemRow } from '@/components/forms/PanelItemRow'
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -225,74 +226,15 @@ export function SupportRequestForm() {
 
         <div className="space-y-4">
           {fields.map((field, index) => (
-            <div key={field.id} className="relative border border-gray-200 rounded-xl p-4 bg-gray-50">
-              {/* Panel header */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-semibold text-gray-700">
-                  Panel {index + 1}
-                </span>
-                {fields.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Remove
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">
-                      Item Name <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      placeholder="e.g., Notifier, Honeywell, Siemens..."
-                      className="mt-1 bg-white"
-                      {...register(`panels.${index}.item_name`)}
-                    />
-                    <FieldError message={errors.panels?.[index]?.item_name?.message} />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">
-                      Model <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      placeholder="e.g., NFS2-3030, FPD-7024"
-                      className="mt-1 bg-white"
-                      {...register(`panels.${index}.model`)}
-                    />
-                    <FieldError message={errors.panels?.[index]?.model?.message} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">
-                      Serial Number <span className="text-gray-400 font-normal">(optional)</span>
-                    </Label>
-                    <Input
-                      placeholder="e.g., SN-2024-XXXXX"
-                      className="mt-1 bg-white"
-                      {...register(`panels.${index}.serial_number`)}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">
-                      Issue Title <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      placeholder="Brief description of the issue"
-                      className="mt-1 bg-white"
-                      {...register(`panels.${index}.issue_title`)}
-                    />
-                    <FieldError message={errors.panels?.[index]?.issue_title?.message} />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PanelItemRow
+              key={field.id}
+              index={index}
+              control={control}
+              setValue={setValue}
+              errors={errors}
+              showRemove={fields.length > 1}
+              onRemove={() => remove(index)}
+            />
           ))}
 
           {/* Add Panel button */}
