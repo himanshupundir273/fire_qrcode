@@ -163,7 +163,7 @@ export async function getAllTechnicians() {
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
-  return data || []
+  return data || [] 
 }
 
 // Admin manually assigns a technician to a request

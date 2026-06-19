@@ -406,7 +406,7 @@ export function SupportRequestForm() {
             <Label htmlFor="visit_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-400" /> Preferred Visit Date
             </Label>
-            <Input id="visit_date" type="date" min={new Date().toISOString().split('T')[0]} className="mt-1" {...register('visit_date')} />
+            <Input id="visit_date" type="date" min={new Date().toISOString().split('T')[0]} className="mt-1" suppressHydrationWarning {...register('visit_date')} />
           </div>
           <div>
             <Label htmlFor="visit_time" className="text-sm font-medium text-gray-700 flex items-center gap-2">

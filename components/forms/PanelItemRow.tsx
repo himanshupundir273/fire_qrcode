@@ -145,18 +145,19 @@ export function PanelItemRow({ index, control, setValue, errors, showRemove, onR
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label className="text-sm font-medium text-gray-700">
-              Serial Number <span className="text-gray-400 font-normal">(optional)</span>
+              Serial Number <span className="text-red-500">*</span>
             </Label>
             <Input
               placeholder="e.g., SN-2024-XXXXX"
               className="mt-1 bg-white"
               value={useWatch({ control, name: `panels.${index}.serial_number` }) || ''}
-              onChange={(e) => setValue(`panels.${index}.serial_number`, e.target.value)}
+              onChange={(e) => setValue(`panels.${index}.serial_number`, e.target.value, { shouldValidate: true })}
             />
+            <FieldError message={errors.panels?.[index]?.serial_number?.message} />
           </div>
           <div>
             <Label className="text-sm font-medium text-gray-700">
-              Issue Title <span className="text-red-500">*</span>
+              Issue Description <span className="text-red-500">*</span>
             </Label>
             <Input
               placeholder="Brief description of the issue"

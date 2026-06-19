@@ -3,8 +3,8 @@ import { z } from 'zod'
 export const panelItemSchema = z.object({
   item_name: z.string().min(1, 'Item name is required'),
   model: z.string().min(1, 'Model is required'),
-  serial_number: z.string().optional(),
-  issue_title: z.string().min(3, 'Issue title is required'),
+  serial_number: z.string().min(1, 'Serial number is required'),
+  issue_title: z.string().min(3, 'Issue description is required'),
 })
 
 export type PanelItem = z.infer<typeof panelItemSchema>
