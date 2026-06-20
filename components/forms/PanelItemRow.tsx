@@ -8,13 +8,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { SupportRequestFormData } from '@/lib/validations'
+import { useTranslations } from 'next-intl'
 
-// Item → Model mapping from Notifier product sheet
 export const PANEL_CATALOG: Record<string, string[]> = {
+  'Fire Alarm Mini Panel':                    ['NF1'],
+  'Fire Alarm Panel (2 Loop)':                ['NF5120'],
   'Fire Alarm Panel (1-4 Loop)':              ['NF5109'],
   'Fire Alarm Panel (1-16 Loop)':             ['NF5000'],
-  'Fire Alarm Panel (1 Loop)':                ['NF1'],
-  'Fire Alarm Panel':                         ['NF5120'],
   'Fire Alarm Panel (64, 128 & 255 Devices)': ['NF5160'],
   'Smoke Detector':                           ['NF5161', 'NF5131'],
   'Heat Detector':                            ['NF5162', 'NF5142'],
@@ -53,14 +53,16 @@ interface Props {
 }
 
 export function PanelItemRow({ index, control, setValue, errors, showRemove, onRemove }: Props) {
+  const tr = useTranslations('form')
   const selectedItem = useWatch({ control, name: `panels.${index}.item_name` })
   const selectedModel = useWatch({ control, name: `panels.${index}.model` })
+  const serialValue = useWatch({ control, name: `panels.${index}.serial_number` })
+  const issueValue = useWatch({ control, name: `panels.${index}.issue_title` })
 
   const models = PANEL_CATALOG[selectedItem] ?? []
 
   const handleItemChange = (value: string) => {
     setValue(`panels.${index}.item_name`, value, { shouldValidate: true })
-    // Auto-select model if only one option, otherwise clear
     const newModels = PANEL_CATALOG[value] ?? []
     if (newModels.length === 1) {
       setValue(`panels.${index}.model`, newModels[0], { shouldValidate: true })
@@ -72,15 +74,12 @@ export function PanelItemRow({ index, control, setValue, errors, showRemove, onR
   return (
     <div className="relative border border-gray-200 rounded-xl p-4 bg-gray-50">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-semibold text-gray-700">Panel {index + 1}</span>
+        <span className="text-sm font-semibold text-gray-700">{tr('panel_label')} {index + 1}</span>
         {showRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
-          >
+          <button type="button" onClick={onRemove}
+            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">
             <Trash2 className="w-3.5 h-3.5" />
-            Remove
+            {tr('remove')}
           </button>
         )}
       </div>
@@ -90,11 +89,11 @@ export function PanelItemRow({ index, control, setValue, errors, showRemove, onR
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label className="text-sm font-medium text-gray-700">
-              Item Name <span className="text-red-500">*</span>
+              {tr('item_name')} <span className="text-red-500">*</span>
             </Label>
             <Select value={selectedItem || ''} onValueChange={handleItemChange}>
               <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-red-500">
-                <SelectValue placeholder="Select item..." />
+                <SelectValue placeholder={tr('select_item')} />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200 shadow-lg max-h-64 overflow-y-auto">
                 {ITEM_NAMES.map((name) => (
@@ -109,7 +108,7 @@ export function PanelItemRow({ index, control, setValue, errors, showRemove, onR
 
           <div>
             <Label className="text-sm font-medium text-gray-700">
-              Model No. <span className="text-red-500">*</span>
+              {tr('model_no')} <span className="text-red-500">*</span>
             </Label>
             {models.length > 1 ? (
               <Select
@@ -118,7 +117,7 @@ export function PanelItemRow({ index, control, setValue, errors, showRemove, onR
                 disabled={!selectedItem}
               >
                 <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-red-500 disabled:opacity-50">
-                  <SelectValue placeholder={selectedItem ? 'Select model...' : 'Select item first'} />
+                  <SelectValue placeholder={selectedItem ? tr('select_model') : tr('select_item_first')} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
                   {models.map((m) => (
@@ -132,7 +131,7 @@ export function PanelItemRow({ index, control, setValue, errors, showRemove, onR
               <Input
                 value={selectedModel || ''}
                 readOnly={models.length === 1}
-                placeholder={selectedItem ? '' : 'Select item first'}
+                placeholder={selectedItem ? '' : tr('select_item_first')}
                 className={`mt-1 bg-white ${models.length === 1 ? 'bg-gray-100 text-gray-600 cursor-default' : ''}`}
                 onChange={(e) => setValue(`panels.${index}.model`, e.target.value, { shouldValidate: true })}
               />
@@ -141,28 +140,28 @@ export function PanelItemRow({ index, control, setValue, errors, showRemove, onR
           </div>
         </div>
 
-        {/* Row 2: Serial Number + Issue Title */}
+        {/* Row 2: Serial Number + Issue Description */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label className="text-sm font-medium text-gray-700">
-              Serial Number <span className="text-red-500">*</span>
+              {tr('serial_number')} <span className="text-red-500">*</span>
             </Label>
             <Input
-              placeholder="e.g., SN-2024-XXXXX"
+              placeholder={tr('serial_placeholder')}
               className="mt-1 bg-white"
-              value={useWatch({ control, name: `panels.${index}.serial_number` }) || ''}
+              value={serialValue || ''}
               onChange={(e) => setValue(`panels.${index}.serial_number`, e.target.value, { shouldValidate: true })}
             />
             <FieldError message={errors.panels?.[index]?.serial_number?.message} />
           </div>
           <div>
             <Label className="text-sm font-medium text-gray-700">
-              Issue Description <span className="text-red-500">*</span>
+              {tr('issue_description')} <span className="text-red-500">*</span>
             </Label>
             <Input
-              placeholder="Brief description of the issue"
+              placeholder={tr('issue_placeholder')}
               className="mt-1 bg-white"
-              value={useWatch({ control, name: `panels.${index}.issue_title` }) || ''}
+              value={issueValue || ''}
               onChange={(e) => setValue(`panels.${index}.issue_title`, e.target.value, { shouldValidate: true })}
             />
             <FieldError message={errors.panels?.[index]?.issue_title?.message} />

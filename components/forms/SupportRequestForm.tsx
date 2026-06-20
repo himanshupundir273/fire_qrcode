@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import {
   Upload, X, ImageIcon, Video, AlertTriangle, Loader2,
   Building2, User, Phone, MapPin, Wrench, FileText,
-  Calendar, Clock, LocateFixed, Plus,
+  Calendar, Clock, LocateFixed, Plus, Languages,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +21,12 @@ import { supportRequestSchema, SupportRequestFormData } from '@/lib/validations'
 import { submitSupportRequest } from '@/actions/requests'
 import { createClient } from '@/lib/supabase/client'
 import { PanelItemRow } from '@/components/forms/PanelItemRow'
+import { NextIntlClientProvider, useTranslations } from 'next-intl'
+import enMessages from '@/messages/en.json'
+import hiMessages from '@/messages/hi.json'
+
+type Lang = 'en' | 'hi'
+const messages: Record<Lang, typeof enMessages> = { en: enMessages, hi: hiMessages }
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -54,7 +60,8 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-red-500 text-xs mt-1">{message}</p>
 }
 
-export function SupportRequestForm() {
+function FormInner({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
+  const tr = useTranslations('form')
   const router = useRouter()
   const [issuePhotos, setIssuePhotos] = useState<UploadedFile[]>([])
   const [video, setVideo] = useState<UploadedFile | null>(null)
@@ -75,17 +82,13 @@ export function SupportRequestForm() {
   const selectedState = watch('state')
 
   const addFiles = (files: FileList, setter: React.Dispatch<React.SetStateAction<UploadedFile[]>>) => {
-    const newFiles = Array.from(files)
-      .filter((f) => f.type.startsWith('image/'))
-      .map((file) => ({ file, preview: URL.createObjectURL(file) }))
+    const newFiles = Array.from(files).filter((f) => f.type.startsWith('image/')).map((file) => ({ file, preview: URL.createObjectURL(file) }))
     setter((prev) => [...prev, ...newFiles].slice(0, 10))
   }
 
   const setVideoFile = (files: FileList) => {
     const file = files[0]
-    if (file && file.type.startsWith('video/')) {
-      setVideo({ file, preview: URL.createObjectURL(file) })
-    }
+    if (file && file.type.startsWith('video/')) setVideo({ file, preview: URL.createObjectURL(file) })
   }
 
   const matchState = (raw: string): string | undefined => {
@@ -114,9 +117,7 @@ export function SupportRequestForm() {
       'state of andhra pradesh': 'Andhra Pradesh', 'state of telangana': 'Telangana',
     }
     if (aliases[normalized]) return aliases[normalized]
-    return INDIAN_STATES.find((s) =>
-      normalized.includes(s.toLowerCase()) || s.toLowerCase().includes(normalized)
-    )
+    return INDIAN_STATES.find((s) => normalized.includes(s.toLowerCase()) || s.toLowerCase().includes(normalized))
   }
 
   const fetchLocation = async () => {
@@ -153,7 +154,7 @@ export function SupportRequestForm() {
       },
       (err) => {
         if (err.code === 1) toast.error('Location permission denied.')
-        else if (err.code === 2) toast.error('Location unavailable. Try again or enter manually.')
+        else if (err.code === 2) toast.error('Location unavailable.')
         else toast.error('Location request timed out.')
         setLocating(false)
       },
@@ -174,19 +175,14 @@ export function SupportRequestForm() {
     try {
       const uploadedIssuePhotos: { url: string; name: string }[] = []
       let uploadedVideo: { url: string; name: string } | null = null
-
       for (const item of issuePhotos) {
-        const path = `issue-photos/${Date.now()}-${item.file.name}`
-        const url = await uploadToSupabase(item.file, 'support-media', path)
+        const url = await uploadToSupabase(item.file, 'support-media', `issue-photos/${Date.now()}-${item.file.name}`)
         uploadedIssuePhotos.push({ url, name: item.file.name })
       }
       if (video) {
-        const path = `videos/${Date.now()}-${video.file.name}`
-        const url = await uploadToSupabase(video.file, 'support-media', path)
+        const url = await uploadToSupabase(video.file, 'support-media', `videos/${Date.now()}-${video.file.name}`)
         uploadedVideo = { url, name: video.file.name }
       }
-
-      // Derive top-level fields from first panel; store all panels as JSON
       const firstPanel = data.panels[0]
       const submissionData: SupportRequestFormData = {
         ...data,
@@ -196,13 +192,9 @@ export function SupportRequestForm() {
         issue_description: JSON.stringify(data.panels),
         priority: 'medium',
       }
-
       const { ticketId } = await submitSupportRequest(submissionData, {
-        productPhotos: [],
-        issuePhotos: uploadedIssuePhotos,
-        video: uploadedVideo,
+        productPhotos: [], issuePhotos: uploadedIssuePhotos, video: uploadedVideo,
       })
-
       toast.success('Request submitted successfully!')
       router.push(`/success/${ticketId}`)
     } catch (err) {
@@ -214,16 +206,32 @@ export function SupportRequestForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" suppressHydrationWarning>
+
+      {/* Language Toggle */}
+      <div className="flex items-center justify-end gap-3">
+        <Languages className="w-4 h-4 text-gray-500" />
+        <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setLang('en')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${lang === 'en' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang('hi')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${lang === 'hi' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+          >
+            हिंदी
+          </button>
+        </div>
+      </div>
 
       {/* 1. Panel & Issue Details */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <SectionHeader
-          icon={Wrench}
-          title="Panel & Issue Details"
-          subtitle="Provide details about your fire alarm panel and the issue"
-        />
-
+        <SectionHeader icon={Wrench} title={tr('panel_title')} subtitle={tr('panel_subtitle')} />
         <div className="space-y-4">
           {fields.map((field, index) => (
             <PanelItemRow
@@ -236,41 +244,28 @@ export function SupportRequestForm() {
               onRemove={() => remove(index)}
             />
           ))}
-
-          {/* Add Panel button */}
           <button
             type="button"
             onClick={() => append({ item_name: '', model: '', serial_number: '', issue_title: '' })}
             className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-500 hover:border-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Add Another Panel
+            {tr('add_panel')}
           </button>
-
-          {errors.panels?.root?.message && (
-            <FieldError message={errors.panels.root.message} />
-          )}
         </div>
       </div>
 
       {/* 2. Upload Media */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <SectionHeader
-          icon={ImageIcon}
-          title="Upload Media"
-          subtitle="Photos and videos help our technicians prepare before the visit"
-        />
+        <SectionHeader icon={ImageIcon} title={tr('media_title')} subtitle={tr('media_subtitle')} />
         <div className="space-y-6">
           <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">
-              Issue / Damage Photos (up to 10)
-            </Label>
+            <Label className="text-sm font-medium text-gray-700 mb-2 block">{tr('issue_photos')}</Label>
             <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-red-400 hover:bg-red-50 transition-colors">
               <Upload className="w-6 h-6 text-gray-400 mb-1" />
-              <span className="text-sm text-gray-500">Click to upload issue/damage photos</span>
-              <span className="text-xs text-gray-400">PNG, JPG, WebP (max 10MB each)</span>
-              <input type="file" className="hidden" accept="image/*" multiple
-                onChange={(e) => e.target.files && addFiles(e.target.files, setIssuePhotos)} />
+              <span className="text-sm text-gray-500">{tr('issue_photos_hint')}</span>
+              <span className="text-xs text-gray-400">{tr('issue_photos_format')}</span>
+              <input type="file" className="hidden" accept="image/*" multiple suppressHydrationWarning onChange={(e) => e.target.files && addFiles(e.target.files, setIssuePhotos)} />
             </label>
             {issuePhotos.length > 0 && (
               <div className="flex flex-wrap gap-3 mt-3">
@@ -290,15 +285,14 @@ export function SupportRequestForm() {
 
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-2 block">
-              Issue Video <span className="text-gray-400 font-normal">(optional)</span>
+              {tr('issue_video')} <span className="text-gray-400 font-normal">({tr('optional')})</span>
             </Label>
             {!video ? (
               <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-red-400 hover:bg-red-50 transition-colors">
                 <Video className="w-6 h-6 text-gray-400 mb-1" />
-                <span className="text-sm text-gray-500">Click to upload a video</span>
-                <span className="text-xs text-gray-400">MP4, MOV, AVI (max 50MB)</span>
-                <input type="file" className="hidden" accept="video/*"
-                  onChange={(e) => e.target.files && setVideoFile(e.target.files)} />
+                <span className="text-sm text-gray-500">{tr('video_hint')}</span>
+                <span className="text-xs text-gray-400">{tr('video_format')}</span>
+                <input type="file" className="hidden" accept="video/*" suppressHydrationWarning onChange={(e) => e.target.files && setVideoFile(e.target.files)} />
               </label>
             ) : (
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -307,9 +301,7 @@ export function SupportRequestForm() {
                   <p className="text-sm font-medium text-gray-700 truncate">{video.file.name}</p>
                   <p className="text-xs text-gray-400">{(video.file.size / (1024 * 1024)).toFixed(1)} MB</p>
                 </div>
-                <button type="button" onClick={() => setVideo(null)}>
-                  <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
-                </button>
+                <button type="button" onClick={() => setVideo(null)}><X className="w-4 h-4 text-gray-400 hover:text-red-500" /></button>
               </div>
             )}
           </div>
@@ -318,25 +310,25 @@ export function SupportRequestForm() {
 
       {/* 3. Contact Information */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <SectionHeader icon={Building2} title="Contact Information" subtitle="How should we reach you?" />
+        <SectionHeader icon={Building2} title={tr('contact_title')} subtitle={tr('contact_subtitle')} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <Label htmlFor="contact_person" className="text-sm font-medium text-gray-700">
-              Contact Person <span className="text-red-500">*</span>
+              {tr('contact_person')} <span className="text-red-500">*</span>
             </Label>
             <div className="relative mt-1">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input id="contact_person" placeholder="Full name of contact person" className="pl-9" {...register('contact_person')} />
+              <Input id="contact_person" placeholder={tr('contact_person_placeholder')} className="pl-9" {...register('contact_person')} />
             </div>
             <FieldError message={errors.contact_person?.message} />
           </div>
           <div>
             <Label htmlFor="contact_number" className="text-sm font-medium text-gray-700">
-              Contact Number <span className="text-red-500">*</span>
+              {tr('contact_number')} <span className="text-red-500">*</span>
             </Label>
             <div className="relative mt-1">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input id="contact_number" placeholder="10-digit mobile number" className="pl-9" maxLength={10} {...register('contact_number')} />
+              <Input id="contact_number" placeholder={tr('contact_number_placeholder')} className="pl-9" maxLength={10} {...register('contact_number')} />
             </div>
             <FieldError message={errors.contact_number?.message} />
           </div>
@@ -351,35 +343,35 @@ export function SupportRequestForm() {
               <MapPin className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Site Address</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Where is the fire alarm panel installed?</p>
+              <h3 className="font-semibold text-gray-900">{tr('address_title')}</h3>
+              <p className="text-sm text-gray-500 mt-0.5">{tr('address_subtitle')}</p>
             </div>
           </div>
           <button type="button" onClick={fetchLocation} disabled={locating}
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0 ml-4">
             {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
-            {locating ? 'Detecting...' : 'Use Current Location'}
+            {locating ? tr('detecting') : tr('use_location')}
           </button>
         </div>
         <div className="space-y-4">
           <div>
             <Label htmlFor="address" className="text-sm font-medium text-gray-700">
-              Complete Address <span className="text-red-500">*</span>
+              {tr('complete_address')} <span className="text-red-500">*</span>
             </Label>
-            <Textarea id="address" placeholder="Building/Flat no., Street, Area, Landmark" className="mt-1 resize-none" rows={2} {...register('address')} />
+            <Textarea id="address" placeholder={tr('address_placeholder')} className="mt-1 resize-none" rows={2} {...register('address')} />
             <FieldError message={errors.address?.message} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="city" className="text-sm font-medium text-gray-700">City <span className="text-red-500">*</span></Label>
-              <Input id="city" placeholder="City" className="mt-1" {...register('city')} />
+              <Label htmlFor="city" className="text-sm font-medium text-gray-700">{tr('city')} <span className="text-red-500">*</span></Label>
+              <Input id="city" placeholder={tr('city')} className="mt-1" {...register('city')} />
               <FieldError message={errors.city?.message} />
             </div>
             <div>
-              <Label className="text-sm font-medium text-gray-700">State <span className="text-red-500">*</span></Label>
+              <Label className="text-sm font-medium text-gray-700">{tr('state')} <span className="text-red-500">*</span></Label>
               <Select value={selectedState || ''} onValueChange={(v) => setValue('state', v, { shouldValidate: true })}>
                 <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500">
-                  <SelectValue placeholder="Select state" />
+                  <SelectValue placeholder={tr('select_state')} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg max-h-60 overflow-y-auto">
                   {INDIAN_STATES.map((state) => (
@@ -390,8 +382,8 @@ export function SupportRequestForm() {
               <FieldError message={errors.state?.message} />
             </div>
             <div>
-              <Label htmlFor="pincode" className="text-sm font-medium text-gray-700">Pincode <span className="text-red-500">*</span></Label>
-              <Input id="pincode" placeholder="6-digit pincode" maxLength={6} className="mt-1" {...register('pincode')} />
+              <Label htmlFor="pincode" className="text-sm font-medium text-gray-700">{tr('pincode')} <span className="text-red-500">*</span></Label>
+              <Input id="pincode" placeholder={tr('pincode_placeholder')} maxLength={6} className="mt-1" suppressHydrationWarning {...register('pincode')} />
               <FieldError message={errors.pincode?.message} />
             </div>
           </div>
@@ -400,21 +392,21 @@ export function SupportRequestForm() {
 
       {/* 5. Visit Preferences */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <SectionHeader icon={Calendar} title="Preferred Visit Schedule" subtitle="Let us know when you would prefer a technician visit (optional)" />
+        <SectionHeader icon={Calendar} title={tr('visit_title')} subtitle={tr('visit_subtitle')} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="visit_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" /> Preferred Visit Date
+              <Calendar className="w-4 h-4 text-gray-400" /> {tr('visit_date')}
             </Label>
             <Input id="visit_date" type="date" min={new Date().toISOString().split('T')[0]} className="mt-1" suppressHydrationWarning {...register('visit_date')} />
           </div>
           <div>
-            <Label htmlFor="visit_time" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400" /> Preferred Visit Time
+            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-gray-400" /> {tr('visit_time')}
             </Label>
             <Select onValueChange={(v) => setValue('visit_time', v)}>
               <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-red-500">
-                <SelectValue placeholder="Select time slot" />
+                <SelectValue placeholder={tr('select_time')} />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200 shadow-lg">
                 {['8:00 AM - 10:00 AM', '10:00 AM - 12:00 PM', '12:00 PM - 2:00 PM', '2:00 PM - 4:00 PM', '4:00 PM - 6:00 PM', '6:00 PM - 8:00 PM'].map((slot) => (
@@ -429,20 +421,25 @@ export function SupportRequestForm() {
       {/* Notice */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-blue-800">
-          By submitting this form, you consent to our team contacting you regarding the support request.
-          A unique ticket ID will be generated for tracking purposes.
-        </p>
+        <p className="text-sm text-blue-800">{tr('notice')}</p>
       </div>
 
       <Button type="submit" disabled={submitting}
         className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-4 text-lg rounded-xl shadow-lg" size="lg">
-        {submitting ? (
-          <><Loader2 className="mr-2 w-5 h-5 animate-spin" />Submitting Request...</>
-        ) : (
-          <><FileText className="mr-2 w-5 h-5" />Submit Support Request</>
-        )}
+        {submitting
+          ? <><Loader2 className="mr-2 w-5 h-5 animate-spin" />{tr('submitting')}</>
+          : <><FileText className="mr-2 w-5 h-5" />{tr('submit')}</>
+        }
       </Button>
     </form>
+  )
+}
+
+export function SupportRequestForm() {
+  const [lang, setLang] = useState<Lang>('en')
+  return (
+    <NextIntlClientProvider locale={lang} messages={messages[lang]} timeZone="Asia/Kolkata">
+      <FormInner lang={lang} setLang={setLang} />
+    </NextIntlClientProvider>
   )
 }
