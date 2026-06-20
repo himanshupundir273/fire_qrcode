@@ -28,7 +28,7 @@ export default function TechnicianLoginPage() {
       await login(data.email, data.password)
     } catch (err: any) {
       if (err?.message?.includes('NEXT_REDIRECT')) return
-      toast.error(err.message || 'Login failed. Please check your credentials.')
+      toast.error(err.message || 'लॉगिन विफल। कृपया अपनी जानकारी जांचें।')
       setLoading(false)
     }
   }
@@ -41,25 +41,25 @@ export default function TechnicianLoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-600 rounded-2xl mb-4 shadow-lg">
             <HardHat className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Technician Login</h1>
-          <p className="text-gray-500 text-sm mt-1">Notofire Service — Field Technician Portal</p>
+          <h1 className="text-2xl font-bold text-gray-900">तकनीशियन लॉगिन</h1>
+          <p className="text-gray-500 text-sm mt-1">Notofire Service — फील्ड तकनीशियन पोर्टल</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" suppressHydrationWarning>
             <div>
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
-              <Input id="email" type="email" placeholder="you@example.com" className="mt-1" {...register('email')} />
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">ईमेल पता</Label>
+              <Input id="email" type="email" placeholder="आपका ईमेल" className="mt-1" {...register('email')} />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">पासवर्ड</Label>
               <div className="relative mt-1">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Your password"
+                  placeholder="आपका पासवर्ड"
                   className="pr-10"
                   {...register('password')}
                 />
@@ -73,24 +73,24 @@ export default function TechnicianLoginPage() {
 
             <Button type="submit" disabled={loading}
               className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-xl">
-              {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Signing in...</> : 'Sign In'}
+              {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />लॉगिन हो रहा है...</> : 'लॉगिन करें'}
             </Button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Don&apos;t have an account?{' '}
+            खाता नहीं है?{' '}
             <Link href="/technician/signup" className="text-orange-600 hover:underline font-medium">
-              Sign up
+              साइन अप करें
             </Link>
           </p>
         </div>
 
         <div className="text-center mt-4 space-y-1">
           <p className="text-xs text-gray-400">
-            <Link href="/admin/login" className="hover:text-gray-600">Admin login →</Link>
+            <Link href="/admin/login" className="hover:text-gray-600">एडमिन लॉगिन →</Link>
           </p>
           <p className="text-xs text-gray-400">
-            <Link href="/" className="hover:text-gray-600">← Back to home</Link>
+            <Link href="/" className="hover:text-gray-600">← होम पर वापस जाएं</Link>
           </p>
         </div>
       </div>

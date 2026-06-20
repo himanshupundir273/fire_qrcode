@@ -10,6 +10,7 @@ import {
   Building2, User, Phone, MapPin, Wrench, FileText,
   Calendar, Clock, LocateFixed, Plus, Languages,
 } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -173,16 +174,19 @@ function FormInner({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }
   const onSubmit = async (data: SupportRequestFormData) => {
     setSubmitting(true)
     try {
-      const uploadedIssuePhotos: { url: string; name: string }[] = []
-      let uploadedVideo: { url: string; name: string } | null = null
-      for (const item of issuePhotos) {
-        const url = await uploadToSupabase(item.file, 'support-media', `issue-photos/${Date.now()}-${item.file.name}`)
-        uploadedIssuePhotos.push({ url, name: item.file.name })
-      }
-      if (video) {
-        const url = await uploadToSupabase(video.file, 'support-media', `videos/${Date.now()}-${video.file.name}`)
-        uploadedVideo = { url, name: video.file.name }
-      }
+      const ts = Date.now()
+      const [uploadedIssuePhotos, uploadedVideo] = await Promise.all([
+        Promise.all(
+          issuePhotos.map(async (item, i) => {
+            const url = await uploadToSupabase(item.file, 'support-media', `issue-photos/${ts}-${i}-${item.file.name}`)
+            return { url, name: item.file.name }
+          })
+        ),
+        video
+          ? uploadToSupabase(video.file, 'support-media', `videos/${ts}-${video.file.name}`)
+              .then(url => ({ url, name: video.file.name }))
+          : Promise.resolve(null),
+      ])
       const firstPanel = data.panels[0]
       const submissionData: SupportRequestFormData = {
         ...data,
@@ -206,28 +210,35 @@ function FormInner({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" suppressHydrationWarning>
-
-      {/* Language Toggle */}
-      <div className="flex items-center justify-end gap-3">
-        <Languages className="w-4 h-4 text-gray-500" />
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setLang('en')}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${lang === 'en' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-          >
-            English
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang('hi')}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${lang === 'hi' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-          >
-            हिंदी
-          </button>
+    <div>
+      {/* Page Header with Language Toggle */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900">{tr('page_title')}</h1>
+          <p className="text-gray-500 mt-2">{tr('page_subtitle')}</p>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0 ml-4 mt-1">
+          <Languages className="w-4 h-4 text-gray-500" />
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setLang('en')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${lang === 'en' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang('hi')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${lang === 'hi' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              हिंदी
+            </button>
+          </div>
         </div>
       </div>
+
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" suppressHydrationWarning>
 
       {/* 1. Panel & Issue Details */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
@@ -432,6 +443,7 @@ function FormInner({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }
         }
       </Button>
     </form>
+    </div>
   )
 }
 

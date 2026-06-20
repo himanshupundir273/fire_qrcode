@@ -29,14 +29,6 @@ export default function SubmitPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900">Submit Support Request</h1>
-          <p className="text-gray-500 mt-2">
-            Fill in the details below and we&apos;ll assign a certified technician as soon as possible.
-          </p>
-        </div>
-
         <SupportRequestForm />
       </div>
     </div>

@@ -47,6 +47,9 @@
     "select_time": "Select time slot",
     "notice": "By submitting this form, you consent to our team contacting you regarding the support request. A unique ticket ID will be generated for tracking purposes.",
     "submit": "Submit Support Request",
-    "submitting": "Submitting Request..."
+    "submitting": "Submitting Request...",
+    "page_title": "Submit Support Request",
+    "page_subtitle": "Fill in the details below and we'll assign a certified technician as soon as possible.",
+    "back": "Back"
   }
 }
